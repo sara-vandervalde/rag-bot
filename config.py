@@ -18,7 +18,12 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # --- הידע הארגוני ---
-DOCS_DIR = os.getenv("DOCS_DIR", "./docs")   # תיקיית קבצי ה-MD (git clone של הריפו)
+DOCS_DIR = os.getenv("DOCS_DIR", "./docs")   # חומר המרצה (git clone של ריפו הקורס) - לא עולה לגיטהב
+EXTRA_DOCS_DIR = "./docs_extra"              # חומר משלים (למשל concepts.md) - כן עולה לגיטהב
+
+# תוויות מקור - נשמרות במטא-דאטה של כל קטע ומוצגות ל-LLM ובממשק
+SOURCE_COURSE = "חומר הקורס"
+SOURCE_EXTRA = "חומר משלים"
 
 # --- החלטה: Vector DB מקומי ---
 CHROMA_DIR = "./chroma_db"

@@ -45,15 +45,26 @@ with st.sidebar:
 - **חיפוש:** היברידי (וקטורי + BM25)
 - **Chunk:** {config.CHUNK_SIZE} טוקנים, חפיפה {config.CHUNK_OVERLAP}
 - **Top-K:** {config.TOP_K}
+- **מקורות:** 🟢 חומר הקורס · 🟡 חומר משלים
 - **הרחבת שאלה:** ללא
 """
     )
 
 
+def source_badge(source_type):
+    # התגית נקבעת בקוד לפי המטא-דאטה - לא תלויה במודל
+    if source_type == config.SOURCE_EXTRA:
+        return "🟡 חומר משלים"
+    return "🟢 חומר הקורס"
+
+
 def show_sources(sources):
     with st.expander(f"📚 הקטעים שנשלפו ({len(sources)})"):
         for i, s in enumerate(sources, 1):
-            st.markdown(f"**{i}. {s['file']}** — `{s['header']}` — ציון: {s['score']:.3f}")
+            st.markdown(
+                f"**{i}. {s['file']}** — {source_badge(s['source_type'])} — "
+                f"`{s['header']}` — ציון: {s['score']:.3f}"
+            )
             st.text(s["text"])
             st.divider()
 
@@ -86,11 +97,16 @@ if question:
             {
                 "file": n.node.metadata.get("file_name", "?"),
                 "header": n.node.metadata.get("header_path", "/"),
+                "source_type": n.node.metadata.get("source_type", config.SOURCE_COURSE),
                 "score": n.score or 0.0,
                 "text": n.node.get_content(),
             }
             for n in nodes
         ]
+        # גיבוי בממשק: אם רוב הקטעים מחומר משלים - מציגים אזהרה גם אם המודל שכח לציין
+        extra_count = sum(1 for s in sources if s["source_type"] == config.SOURCE_EXTRA)
+        if sources and extra_count > len(sources) / 2 and "⚠️" not in answer:
+            st.warning("רוב הקטעים שנשלפו הם מחומר משלים, ולא מחומר המרצה.")
         st.markdown(answer)
         if sources:
             show_sources(sources)

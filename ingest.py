@@ -4,6 +4,7 @@
 מסמכים → חלוקה לפי כותרות → פיצול סעיפים ארוכים → Embedding → Chroma
                                                     ↘ אינדקס BM25
 """
+import os
 import shutil
 import time
 
@@ -17,12 +18,30 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 import config
 
 
+def load_folder(folder: str, source_label: str):
+    """טוען את קבצי ה-MD מתיקייה ומסמן כל מסמך בסוג המקור שלו."""
+    if not os.path.isdir(folder) or not any(
+        f.endswith(".md") for _, _, files in os.walk(folder) for f in files
+    ):
+        print(f"התיקייה {folder} ריקה או לא קיימת - מדלג")
+        return []
+    docs = SimpleDirectoryReader(folder, required_exts=[".md"], recursive=True).load_data()
+    for d in docs:
+        d.metadata["source_type"] = source_label
+        # התווית נשלחת ל-LLM (כדי שידע לציין את המקור), אבל לא נכנסת לווקטור
+        d.excluded_embed_metadata_keys.append("source_type")
+    print(f"נטענו {len(docs)} מסמכים מ-{folder} ({source_label})")
+    return docs
+
+
 def main():
-    # 1. טעינת מסמכים - כל קבצי ה-MD בתיקייה (כולל תתי-תיקיות; תיקיית .git מדולגת)
-    documents = SimpleDirectoryReader(
-        config.DOCS_DIR, required_exts=[".md"], recursive=True
-    ).load_data()
-    print(f"נטענו {len(documents)} מסמכים")
+    # 1. טעינת מסמכים משתי תיקיות, כל אחת עם תווית מקור במטא-דאטה
+    documents = load_folder(config.DOCS_DIR, config.SOURCE_COURSE) + load_folder(
+        config.EXTRA_DOCS_DIR, config.SOURCE_EXTRA
+    )
+    if not documents:
+        print("לא נמצאו קבצי MD. בדקי את התיקיות docs ו-docs_extra.")
+        return
 
     # 2א. חלוקה מבוססת מבנה: כל כותרת (#, ##, ###) מתחילה קטע חדש.
     #     נתיב הכותרות נשמר כמטא-דאטה (header_path), למשל "/Docker/Volumes/"
