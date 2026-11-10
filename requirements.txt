@@ -1,0 +1,10 @@
+llama-index-core
+llama-index-embeddings-cohere
+llama-index-vector-stores-chroma
+llama-index-retrievers-bm25
+llama-index-llms-groq
+llama-index-llms-cohere
+chromadb
+streamlit
+python-dotenv
+truststore
